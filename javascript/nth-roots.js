@@ -4,36 +4,12 @@ function abs(x) {
     return x >= 0 ? x : - x;
 }
 
-const tolerance = 0.00001;
-function fixed_point(f, first_guess) {
-    function close_enough(x, y) {
-        return abs(x - y) < tolerance;
-    }
-    function try_with(guess) {
-        const next = f(guess);
-        return close_enough(guess, next)
-               ? next
-               : try_with(next);
-    }
-    return try_with(first_guess);
-}
-
 function average(x, y) {
     return (x + y) / 2;
 }
 
 function average_damp(f) {
     return x => average(x, f(x));
-}
-
-function compose(f, g) {
-    return x => f(g(x));
-}
-
-function repeated(f, n) {
-    return n === 0
-           ? x => x
-           : compose(f, repeated(f, n - 1));
 }
 
 function square(x) {
@@ -52,6 +28,40 @@ function fast_expt(b, n) {
            : b * fast_expt(b, n - 1);
 }
 
+function is_good_enough(guess, x) {
+    return abs(square(guess) - x) < 0.001;
+}
+
+function improve(guess, x) {
+    return average(guess, x / guess);
+}
+
+function compose(f, g) {
+    return x => f(g(x));
+}
+
+function repeated(f, n) {
+    return n === 0
+           ? x => x
+           : compose(f, repeated(f, n - 1));
+}
+
+
+// fixed point approximation
+const tolerance = 0.00001;
+function fixed_point(f, first_guess) {
+    function close_enough(x, y) {
+        return abs(x - y) < tolerance;
+    }
+    function try_with(guess) {
+        const next = f(guess);
+        return close_enough(guess, next)
+               ? next
+               : try_with(next);
+    }
+    return try_with(first_guess);
+}
+
 // Newton's method 
 const dx = 0.00001;
 
@@ -66,6 +76,15 @@ function newtons_method(g, guess) {
     return fixed_point(newton_transform(g), guess);
 }
 
+// iterative improvement 
+function iterative_improve(is_good_enough, improve) {
+    function iterate(guess) {
+        return is_good_enough(guess)
+               ? guess
+               : iterate(improve(guess));
+    }
+    return iterate;
+}
 
 //square root using fixed point
 function sqrt_fp(x) {
@@ -78,13 +97,7 @@ function sqrt_nt(x) {
 }
 
 //square root using newton's method - another way to implement approximation - from 1.1.7
-function is_good_enough(guess, x) {
-    return abs(square(guess) - x) < 0.001;
-}
 
-function improve(guess, x) {
-    return average(guess, x / guess);
-}
 
 function sqrt_iter(guess, x) {
     return is_good_enough(guess, x)
@@ -96,6 +109,13 @@ function sqrt_nt2(x) {
     return sqrt_iter(1, x);
 }
 
+// square root using iterative improvement
+function sqrt_it(x) {
+    return iterative_improve(y => is_good_enough(y, x), 
+                             y => improve(y, x))(1);
+}
+
+console.log(sqrt_it(36));
 
 // cube root using fixed point
 function cube_root(x) {
