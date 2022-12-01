@@ -135,4 +135,13 @@ function tree_map(f, tree) {
               tree);
 }
 
+function subsets(s) {
+    if (is_null(s)) {
+        return list(null);
+    } else {
+        const rest = subsets(tail(s));  // subsets without the first element
+        return append(rest, map(x => pair(head(s), x), rest)); // subsets without e + those subsets adding e
+    }
+}
 
+display(subsets(list(1, 2, 3)));
